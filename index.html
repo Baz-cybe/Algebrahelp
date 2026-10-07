@@ -25,15 +25,6 @@
     <meta property="twitter:description" content="Web Dashers is a fan-made browser mod of the Geometry Dash Web Demo. It features the main levels, a built-in level creator, and an evel search to play online levels. The project is actively in development, with more features and updates planned." />
     <meta property="twitter:image" content="https://web-dashers.github.io/wd_assets/thumbnail_1024.png" />
 
-    <!-- Libraries and stuff -->
-    <script src="assets/scripts/game/allObjects.js?latest"></script>
-    <script src="assets/scripts/game/allLevels.js"></script>
-    <script src="assets/scripts/libs/phaser.min.js"></script>
-    <script src="assets/scripts/libs/pako.min.js"></script>
-    <script src="assets/scripts/utils/cache-manager.js"></script>
-    <script src="assets/scripts/api/GDapiWrapper.js"></script>
-    <script src="assets/scripts/utils/api-config.js"></script>
-    <script src="assets/scripts/api/account-api.js"></script>
     <!-- workerssdsss nwo-->
     <script>
         (function () {
@@ -96,15 +87,7 @@
             };
         })();
     </script>
-    <script defer src="assets/scripts/utils/config.js"></script>
-    <script defer src="assets/scripts/core/triggers.js"></script>
-    <script defer src="assets/scripts/core/level.js?latest"></script>
-    <script defer src="assets/scripts/core/player.js?latehkjthykhst"></script>
-    <script defer src="assets/scripts/core/audio.js"></script>
-    <script defer src="assets/scripts/core/loading-screen.js"></script>
-    <script defer src="assets/scripts/core/level-editor.js?latest"></script>
-    <script defer src="assets/scripts/core/game-scene.js?latest3"></script>
-    <script defer src="assets/scripts/core/main.js"></script>
+
     <script>
         new ResizeObserver(() => {
             window.dispatchEvent(new Event('resize'));
@@ -114,9 +97,100 @@
             event.preventDefault();
         };
     </script>
+
+    <!-- ================= PASSWORD GATE ================= -->
+    <script>
+        // >>>>>>>>>>>> CHANGE THE PASSWORD ON THIS LINE <<<<<<<<<<<<
+        const GAME_PASSWORD = "OrangeBoy1";
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        // Scripts that load only AFTER the correct password is entered (order matters)
+        const GAME_SCRIPTS = [
+            "assets/scripts/game/allObjects.js?latest",
+            "assets/scripts/game/allLevels.js",
+            "assets/scripts/libs/phaser.min.js",
+            "assets/scripts/libs/pako.min.js",
+            "assets/scripts/utils/cache-manager.js",
+            "assets/scripts/api/GDapiWrapper.js",
+            "assets/scripts/utils/api-config.js",
+            "assets/scripts/api/account-api.js",
+            "assets/scripts/utils/config.js",
+            "assets/scripts/core/triggers.js",
+            "assets/scripts/core/level.js?latest",
+            "assets/scripts/core/player.js?latehkjthykhst",
+            "assets/scripts/core/audio.js",
+            "assets/scripts/core/loading-screen.js",
+            "assets/scripts/core/level-editor.js?latest",
+            "assets/scripts/core/game-scene.js?latest3",
+            "assets/scripts/core/main.js"
+        ];
+
+        function loadScriptsInOrder(list, done) {
+            let i = 0;
+            (function next() {
+                if (i >= list.length) return done();
+                const s = document.createElement("script");
+                s.src = list[i++];
+                s.onload = next;
+                s.onerror = next; // keep going even if one fails
+                document.head.appendChild(s);
+            })();
+        }
+
+        function startGame() {
+            const gate = document.getElementById("pw-gate");
+            if (gate) gate.remove();
+            loadScriptsInOrder(GAME_SCRIPTS, function () {
+                // Scripts loaded after page load, so fire these in case main.js waits for them
+                document.dispatchEvent(new Event("DOMContentLoaded"));
+                window.dispatchEvent(new Event("load"));
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Skip the prompt if this browser already entered the right password
+            try {
+                if (localStorage.getItem("wd_pw") === GAME_PASSWORD) {
+                    return startGame();
+                }
+            } catch (e) {}
+
+            const input = document.getElementById("pw-input");
+            const btn = document.getElementById("pw-btn");
+            const err = document.getElementById("pw-err");
+
+            function submit() {
+                if (input.value === GAME_PASSWORD) {
+                    try { localStorage.setItem("wd_pw", GAME_PASSWORD); } catch (e) {}
+                    startGame();
+                } else {
+                    err.textContent = "Wrong password";
+                    input.value = "";
+                    input.focus();
+                }
+            }
+
+            btn.addEventListener("click", submit);
+            input.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") submit();
+            });
+            input.focus();
+        });
+    </script>
 </head>
 
 <body>
+    <div id="pw-gate" style="position:fixed;inset:0;z-index:99999;background:#111;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;">
+        <div style="text-align:center;padding:24px;">
+            <h1 style="color:#C1FB3D;margin:0 0 16px;font-size:28px;">Web Dashers</h1>
+            <input id="pw-input" type="password" placeholder="Enter password" autocomplete="off"
+                style="padding:10px 14px;font-size:16px;border-radius:6px;border:2px solid #C1FB3D;background:#222;color:#fff;outline:none;width:220px;">
+            <br>
+            <button id="pw-btn"
+                style="margin-top:12px;padding:10px 24px;font-size:16px;font-weight:bold;border:none;border-radius:6px;background:#C1FB3D;color:#111;cursor:pointer;">Play</button>
+            <div id="pw-err" style="color:#ff5555;margin-top:12px;min-height:20px;font-size:14px;"></div>
+        </div>
+    </div>
 </body>
 
 </html>
